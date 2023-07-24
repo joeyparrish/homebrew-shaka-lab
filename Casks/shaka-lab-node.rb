@@ -26,7 +26,7 @@ cask "shaka-lab-node" do
   # this way.  Instead, our tap repo includes the sources.  To satisfy
   # Homebrew, give a URL that never changes and returns no data.
   url "http://www.gstatic.com/generate_204"
-  version "20230724.183913"
+  version "20230724.184149"
   sha256 "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
 
   # Casks can't have optional dependencies, so note to the user that Tizen can
@@ -66,8 +66,8 @@ cask "shaka-lab-node" do
     FileUtils.install "#{source_root}/shaka-lab-node/node-templates.yaml", destination, :mode => 0644
     FileUtils.install "#{source_root}/shaka-lab-node/package.json", destination, :mode => 0644
     FileUtils.install "#{source_root}/shaka-lab-node/start-nodes.js", destination, :mode => 0644
-    FileUtils.install "#{source_root}/shaka-lab-node/macos/*", destination, :mode => 0644
-    FileUtils.install "#{source_root}/shaka-lab-node/macos/*.sh", destination, :mode => 0755
+    FileUtils.install Dir.glob("#{source_root}/shaka-lab-node/macos/*"), destination, :mode => 0644
+    FileUtils.install Dir.glob("#{source_root}/shaka-lab-node/macos/*.sh"), destination, :mode => 0755
 
     # Config file goes in /opt/homebrew/etc.  Don't overwrite it!
     # Don't overwrite the config file if it already exists!

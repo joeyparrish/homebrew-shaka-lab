@@ -66,8 +66,8 @@ cask "shaka-lab-node" do
     FileUtils.install "#{source_root}/shaka-lab-node/node-templates.yaml", destination, :mode => 0644
     FileUtils.install "#{source_root}/shaka-lab-node/package.json", destination, :mode => 0644
     FileUtils.install "#{source_root}/shaka-lab-node/start-nodes.js", destination, :mode => 0644
-    FileUtils.install "#{source_root}/shaka-lab-node/macos/*", destination, :mode => 0644
-    FileUtils.install "#{source_root}/shaka-lab-node/macos/*.sh", destination, :mode => 0755
+    FileUtils.install Dir.glob("#{source_root}/shaka-lab-node/macos/*"), destination, :mode => 0644
+    FileUtils.install Dir.glob("#{source_root}/shaka-lab-node/macos/*.sh"), destination, :mode => 0755
 
     # Config file goes in /opt/homebrew/etc.  Don't overwrite it!
     # Don't overwrite the config file if it already exists!
