@@ -14,30 +14,36 @@
 
 # macOS Homebrew package definition for Shaka Lab Node.
 
-# Homebrew docs: https://docs.brew.sh/Formula-Cookbook
-#                https://rubydoc.brew.sh/Formula
+# Homebrew docs: https://docs.brew.sh/Cask-Cookbook
+#                https://rubydoc.brew.sh/Cask/Cask.html
 
-class ShakaLabNode < Formula
-  desc "Shaka Lab Node - Selenium grid nodes for the Shaka Lab"
+cask "shaka-lab-node" do
+  name "Shaka Lab Node"
   homepage "https://github.com/shaka-project/shaka-lab"
-  license "Apache-2.0"
+  desc "Selenium grid nodes for the Shaka Lab"
 
-  # Formulae require a URL, but we don't actually have sources to download in
+  # Casks require a URL, but we don't actually have sources to download in
   # this way.  Instead, our tap repo includes the sources.  To satisfy
   # Homebrew, give a URL that never changes and returns no data.
   url "http://www.gstatic.com/generate_204"
   version "1.0.0"
   sha256 "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
 
-  # Use --with-docker to have Homebrew install Docker from source.
-  # Docker is only needed to activate the Tizen node.
-  # Skip that if you already have Docker installed or don't need Tizen.
-  depends_on "docker" => :optional
+  # Casks can't have optional dependencies, so note to the user that Tizen can
+  # enhance this package, if available.
+  caveats "[Optional] To run a Tizen node, you also need Docker."
 
-  # We need at least node v12 installed.
-  depends_on "node" => "12"
+  # We need a working JDK, at least v14.
+  # NOTE: We can't express a specific version in a Cask's dependencies.
+  depends_on cask: "oracle-jdk"
 
-  def install
+  # We need node.js, at least v12.
+  # NOTE: We can't express a specific version in a Cask's dependencies.
+  depends_on formula: "node"
+
+  # Use preflight so that if the commands fail, the package is not considered
+  # installed.
+  preflight do
     # Detect our environment.  If we're building from the source repo (with
     # `brew install ./shaka-lab-node.rb`, we need a different root directory
     # than if this is installed as a tap.  Tap repos have a very specific
@@ -94,45 +100,9 @@ class ShakaLabNode < Formula
 
     # Service PID file goes to /opt/homebrew/var/run
     FileUtils.mkdir_p var/"run"
-  end
 
-  # The output of this method is printed to the user after installation.  Here
-  # we warn the user if Java needs to be installed, and we tell them how to
-  # start the services.
-  #
-  # We _could_ depend on a Java formula directly, but that would involve
-  # installing OpenJDK, including nonsense like X11 libraries (which Mac
-  # doesn't use).
-  #
-  # What is preferable is to install Oracle's JDK as a binary, which is only
-  # available in Homebrew as a "cask".  But a "formula" (this package) can't
-  # depend on a "cask".  So instead, we have to inform the user if Java is
-  # missing and recommend that they install the cask to solve it.
-  #
-  # We have to tell the user what to do to start the services because Homebrew
-  # runs installation commands in a sandbox, so we can't start the service
-  # automatically during installation.
-  def caveats
-    output = <<~EOS
-      ******* ATTENTION *******
-    EOS
-
-    # Here we use ruby's native system method (Kernel.system) instead of
-    # Homebrew's (system) so that we can get an exit code instead of failing.
-    unless Kernel.system "java", "--version", :out=>["/dev/null"], :err=>["/dev/null"]
-      output += <<~EOS
-        Java not found; please run:    brew install --cask oracle-jdk
-
-      EOS
-    end
-
-    output += <<~EOS
-      Start services; please run:    #{opt_prefix}/restart-services.sh
-
-      These tasks can't be done for you because of sandboxing.
-      ******* ********* *******
-    EOS
-
-    return output
+    puts "Restarting services..."
+    system_command "#{opt_prefix}/restart-services.sh"
+    puts "Done!"
   end
 end
