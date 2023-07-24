@@ -21,7 +21,7 @@
 set -e
 
 # Set PATH to include node, npm, and other homebrew executables.
-export PATH="$HOMEBREW_PREFIX:$PATH"
+export PATH="$HOMEBREW_PREFIX/bin:$PATH"
 
 # Go to the install directory of shaka-lab-node.
 cd /opt/shaka-lab-node

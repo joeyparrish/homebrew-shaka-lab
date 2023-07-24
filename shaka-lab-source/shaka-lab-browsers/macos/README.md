@@ -20,7 +20,7 @@ brew install shaka-lab-browsers
 ## Updates
 
 ```sh
-brew update && brew upgrade
+brew update && brew upgrade shaka-lab-browsers
 ```
 
 **NOTE**: This package does not control the update of any browsers.

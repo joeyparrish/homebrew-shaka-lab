@@ -32,7 +32,7 @@ brew install shaka-lab-gateway-client
 ## Updates
 
 ```sh
-brew update && brew upgrade
+brew update && brew upgrade shaka-lab-gateway-client
 ```
 
 ## Configuration

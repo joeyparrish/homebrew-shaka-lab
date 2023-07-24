@@ -23,7 +23,7 @@ brew install shaka-lab-node
 ## Updates
 
 ```sh
-brew update && brew upgrade
+brew update && brew upgrade shaka-lab-node
 /opt/shaka-lab-node/restart-services.sh
 ```
 

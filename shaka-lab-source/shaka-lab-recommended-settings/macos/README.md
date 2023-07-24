@@ -24,7 +24,7 @@ brew install shaka-lab-recommended-settings
 ## Updates
 
 ```sh
-brew update && brew upgrade
+brew update && brew upgrade shaka-lab-recommended-settings
 ```
 
 ## Uninstallation
