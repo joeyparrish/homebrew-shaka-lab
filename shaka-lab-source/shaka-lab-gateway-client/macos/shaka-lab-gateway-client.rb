@@ -35,6 +35,7 @@ cask "shaka-lab-gateway-client" do
   postflight do
     # Commands to join the domain will fail if we're already in it, so check.
     domain = `dsconfigad -show | awk '/Active Directory Domain/{print $NF}'`
+    puts "Current domain = \"#{domain}\""
 
     if domain == "lab.shaka"
       puts "Already a member of the Shaka Lab domain."
@@ -46,7 +47,8 @@ cask "shaka-lab-gateway-client" do
       ], sudo: true
 
       puts "Joining Shaka Lab domain via Shaka Lab Gateway."
-      puts "When prompted, enter your Active Directory Administrator password."
+      puts "When prompted for \"Password\", enter your own password for sudo."
+      puts "When prompted for \"Administrator's Password\", enter your Active Directory Administrator password."
 
       system_command "/usr/sbin/dsconfigad", args: [
         "-domain", "lab.shaka",
@@ -60,10 +62,12 @@ cask "shaka-lab-gateway-client" do
   uninstall_preflight do
     # Commands to leave the domain will fail if we're not in it, so check.
     domain = `dsconfigad -show | awk '/Active Directory Domain/{print $NF}'`
+    puts "Current domain = \"#{domain}\""
 
     if domain == "lab.shaka"
       puts "Leaving the Shaka Lab domain via Shaka Lab Gateway."
-      puts "When prompted, enter your Active Directory Administrator password."
+      puts "When prompted for \"Password\", enter your own password for sudo."
+      puts "When prompted for \"Administrator's Password\", enter your Active Directory Administrator password."
 
       system_command "/usr/sbin/dsconfigad", args: [
         "-remove",
