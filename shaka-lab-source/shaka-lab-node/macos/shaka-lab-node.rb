@@ -41,6 +41,10 @@ cask "shaka-lab-node" do
   # NOTE: We can't express a specific version in a Cask's dependencies.
   depends_on formula: "node"
 
+  # Tell homebrew that we won't "install" anything.  We do, just not using the
+  # primitives for Casks, which are oriented around app bundles.
+  stage_only true
+
   # The path from the Cask definition to the full shaka-lab source.
   # We install files from there.
   source_root = "#{__dir__}/../shaka-lab-source"
@@ -50,18 +54,22 @@ cask "shaka-lab-node" do
   # later for convenience.
   destination = "#{HOMEBREW_PREFIX}/opt/shaka-lab-node"
 
-  # The main shaka-lab-node sources.  Declared as artifacts, no logic required.
-  artifact "#{source_root}/shaka-lab-node/macos", target: destination
-  # Additional files from other folders.
-  artifact "#{source_root}/LICENSE.TXT", target: "#{destination}/"
-  artifact "#{source_root}/selenium-jar/selenium-server-standalone-3.141.59.jar", target: "#{destination}/"
-  artifact "#{source_root}/shaka-lab-node/node-templates.yaml", target: "#{destination}/"
-  artifact "#{source_root}/shaka-lab-node/package.json", target: "#{destination}/"
-  artifact "#{source_root}/shaka-lab-node/start-nodes.js", target: "#{destination}/"
-
   # Use preflight so that if the commands fail, the package is not considered
   # installed.
   preflight do
+    # Create the destination directory.
+    FileUtils.mkdir_p destination
+
+    # Main shaka-lab-node files.
+    FileUtils.install "#{source_root}/LICENSE.txt", destination, :mode => 0644
+    FileUtils.install "#{source_root}/selenium-jar/selenium-server-standalone-3.141.59.jar", destination, :mode => 0644
+    FileUtils.install "#{source_root}/shaka-lab-node/node-templates.yaml", destination, :mode => 0644
+    FileUtils.install "#{source_root}/shaka-lab-node/package.json", destination, :mode => 0644
+    FileUtils.install "#{source_root}/shaka-lab-node/start-nodes.js", destination, :mode => 0644
+    FileUtils.install "#{source_root}/shaka-lab-node/macos/*", destination, :mode => 0644
+    FileUtils.install "#{source_root}/shaka-lab-node/macos/*.sh", destination, :mode => 0755
+
+    # Config file goes in /opt/homebrew/etc.  Don't overwrite it!
     # Don't overwrite the config file if it already exists!
     unless File.exist? "#{destination}/shaka-lab-node-config.yaml"
       FileUtils.install "#{source_root}/shaka-lab-node/shaka-lab-node-config.yaml", destination, :mode => 0644
