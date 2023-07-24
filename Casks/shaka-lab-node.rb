@@ -26,7 +26,7 @@ cask "shaka-lab-node" do
   # this way.  Instead, our tap repo includes the sources.  To satisfy
   # Homebrew, give a URL that never changes and returns no data.
   url "http://www.gstatic.com/generate_204"
-  version "20230724.180731"
+  version "20230724.181506"
   sha256 "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
 
   # Casks can't have optional dependencies, so note to the user that Tizen can
@@ -51,32 +51,30 @@ cask "shaka-lab-node" do
   destination = "#{HOMEBREW_PREFIX}/opt/shaka-lab-node"
 
   # The main shaka-lab-node sources.  Declared as artifacts, no logic required.
-  artifact "#{source_root}/LICENSE.TXT", target: destination
-  artifact "#{source_root}/selenium-jar/selenium-server-standalone-3.141.59.jar", target: destination
-  artifact "#{source_root}/shaka-lab-node/node-templates.yaml", target: destination
-  artifact "#{source_root}/shaka-lab-node/package.json", target: destination
-  artifact "#{source_root}/shaka-lab-node/start-nodes.js", target: destination
-  artifact "#{source_root}/shaka-lab-node/macos/log-wrapper.js", target: destination
-  artifact "#{source_root}/shaka-lab-node/macos/update-drivers.sh", target: destination
-  artifact "#{source_root}/shaka-lab-node/macos/shaka-lab-node-service.plist", target: destination
-  artifact "#{source_root}/shaka-lab-node/macos/shaka-lab-node-update.plist", target: destination
-  artifact "#{source_root}/shaka-lab-node/macos/stop-services.sh", target: destination
-  artifact "#{source_root}/shaka-lab-node/macos/restart-services.sh", target: destination
-  artifact "#{source_root}/shaka-lab-node/macos/shaka-lab-node-logrotate.conf", target: destination
+  artifact "#{source_root}/shaka-lab-node/macos", target: destination
+  # Additional files from other folders.
+  artifact "#{source_root}/LICENSE.TXT", target: "#{destination}/"
+  artifact "#{source_root}/selenium-jar/selenium-server-standalone-3.141.59.jar", target: "#{destination}/"
+  artifact "#{source_root}/shaka-lab-node/node-templates.yaml", target: "#{destination}/"
+  artifact "#{source_root}/shaka-lab-node/package.json", target: "#{destination}/"
+  artifact "#{source_root}/shaka-lab-node/start-nodes.js", target: "#{destination}/"
 
   # Use preflight so that if the commands fail, the package is not considered
   # installed.
   preflight do
-    # Don't overwrite the config file!
+    # Don't overwrite the config file if it already exists!
     unless File.exist? "#{destination}/shaka-lab-node-config.yaml"
       FileUtils.install "#{source_root}/shaka-lab-node/shaka-lab-node-config.yaml", destination, :mode => 0644
     end
 
     # This service definitions needs a hard-coded path to node.js, which is
-    # installed under a variable Homebrew prefix.  So replace
+    # installed under a variable Homebrew prefix.  So replace the string
     # "$HOMEBREW_PREFIX" with the current prefix (in the HOMEBREW_PREFIX
     # variable).
-    inreplace "#{destination}/shaka-lab-node-service.plist", "$HOMEBREW_PREFIX", HOMEBREW_PREFIX
+    system_command "/usr/bin/sed", args: [
+      "-e", "s/\\$HOMEBREW_PREFIX/#{HOMEBREW_PREFIX}/",
+      "-i", "#{destination}/shaka-lab-node-service.plist",
+    ]
 
     # Service logs go here, so make sure the folder exists:
     FileUtils.mkdir_p "#{destination}/logs"
