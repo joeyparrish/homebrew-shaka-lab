@@ -80,7 +80,7 @@ cask "shaka-lab-node" do
     # "$HOMEBREW_PREFIX" with the current prefix (in the HOMEBREW_PREFIX
     # variable).
     system_command "/usr/bin/sed", args: [
-      "-e", "s/\\$HOMEBREW_PREFIX/#{HOMEBREW_PREFIX}/",
+      "-e", "s@\\$HOMEBREW_PREFIX@#{HOMEBREW_PREFIX}@",
       "-i", "#{destination}/shaka-lab-node-service.plist",
     ]
 

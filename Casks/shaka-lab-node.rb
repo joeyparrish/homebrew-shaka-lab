@@ -26,7 +26,7 @@ cask "shaka-lab-node" do
   # this way.  Instead, our tap repo includes the sources.  To satisfy
   # Homebrew, give a URL that never changes and returns no data.
   url "http://www.gstatic.com/generate_204"
-  version "20230724.184149"
+  version "20230724.184246"
   sha256 "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
 
   # Casks can't have optional dependencies, so note to the user that Tizen can
@@ -80,7 +80,7 @@ cask "shaka-lab-node" do
     # "$HOMEBREW_PREFIX" with the current prefix (in the HOMEBREW_PREFIX
     # variable).
     system_command "/usr/bin/sed", args: [
-      "-e", "s/\\$HOMEBREW_PREFIX/#{HOMEBREW_PREFIX}/",
+      "-e", "s@\\$HOMEBREW_PREFIX@#{HOMEBREW_PREFIX}@",
       "-i", "#{destination}/shaka-lab-node-service.plist",
     ]
 
