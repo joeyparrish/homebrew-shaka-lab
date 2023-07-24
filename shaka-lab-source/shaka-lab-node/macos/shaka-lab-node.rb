@@ -54,6 +54,15 @@ cask "shaka-lab-node" do
   # later for convenience.
   destination = "#{HOMEBREW_PREFIX}/opt/shaka-lab-node"
 
+  # NOTE: The inreplace command for Formulae is not available in Casks.
+  # Since it is very simple, we replicate it here to keep the installation
+  # code more readable.
+  def inreplace(path, original_text, new_text)
+    contents = File.read(path)
+    contents.gsub!(original_text, new_text)
+    File.open(path, "w") {|f| f.write(contents)}
+  end
+
   # Use preflight so that if the commands fail, the package is not considered
   # installed.
   preflight do
@@ -69,20 +78,24 @@ cask "shaka-lab-node" do
     FileUtils.install Dir.glob("#{source_root}/shaka-lab-node/macos/*"), destination, :mode => 0644
     FileUtils.install Dir.glob("#{source_root}/shaka-lab-node/macos/*.sh"), destination, :mode => 0755
 
-    # Config file goes in /opt/homebrew/etc.  Don't overwrite it!
     # Don't overwrite the config file if it already exists!
-    unless File.exist? "#{destination}/shaka-lab-node-config.yaml"
-      FileUtils.install "#{source_root}/shaka-lab-node/shaka-lab-node-config.yaml", destination, :mode => 0644
+    # This file will be left in tact during uninstall.
+    unless File.exist? "/etc/shaka-lab-node-config.yaml"
+      # Use sudo to create the initial config file in /etc, owned by this user.
+      system_command "/usr/bin/install", args: [
+        "-m", "0644",
+        "-o", ENV["UID"],
+        "-g", ENV["GID"],
+        "#{source_root}/shaka-lab-node/shaka-lab-node-config.yaml",
+        "/etc/",
+      ], sudo: true
     end
 
     # This service definitions needs a hard-coded path to node.js, which is
     # installed under a variable Homebrew prefix.  So replace the string
     # "$HOMEBREW_PREFIX" with the current prefix (in the HOMEBREW_PREFIX
     # variable).
-    system_command "/usr/bin/sed", args: [
-      "-e", "s@\\$HOMEBREW_PREFIX@#{HOMEBREW_PREFIX}@",
-      "-i", "#{destination}/shaka-lab-node-service.plist",
-    ]
+    inreplace "#{destination}/shaka-lab-node-service.plist", "$HOMEBREW_PREFIX", HOMEBREW_PREFIX
 
     # Service logs go here, so make sure the folder exists:
     FileUtils.mkdir_p "#{destination}/logs"
@@ -91,12 +104,6 @@ cask "shaka-lab-node" do
     system_command "/bin/ln", args: [
       "-sf", "#{destination}/shaka-lab-node-logrotate.conf",
       "/etc/newsyslog.d/",
-    ], sudo: true
-
-    # Symlink the main config file into /etc.
-    system_command "/bin/ln", args: [
-      "-sf", "#{destination}/shaka-lab-node-config.yaml",
-      "/etc/",
     ], sudo: true
 
     # Symlink the installation folder into /opt.
@@ -109,5 +116,17 @@ cask "shaka-lab-node" do
     puts "Restarting services..."
     system_command "#{opt_prefix}/restart-services.sh"
     puts "Done!"
+  end
+
+  uninstall_preflight do
+    # Remove the main installation.
+    FileUtils.remove_entry_secure(destination)
+
+    # Clean up our root-owned symlinks.
+    system_command "/bin/rm", args: [
+      "-f",
+      "/etc/newsyslog.d/shaka-lab-node-logrotate.conf",
+      "/opt/shaka-lab-node",
+    ], sudo: true
   end
 end
