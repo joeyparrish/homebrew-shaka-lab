@@ -26,12 +26,15 @@ cask "shaka-lab-recommended-settings" do
   # this way.  Instead, our tap repo includes the sources.  To satisfy
   # Homebrew, give a URL that never changes and returns no data.
   url "http://www.gstatic.com/generate_204"
-  version "20230724.201335"
+  version "20230724.203651"
   sha256 "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
 
   # We don't install anything.  We only depend on other casks and set OS
   # settings.
   stage_only true
+
+  # Signal that this package does not need upgrading through "brew upgrade".
+  auto_updates true
 
   # Use preflight so that if the commands fail, the package is not considered
   # installed.
@@ -50,9 +53,10 @@ cask "shaka-lab-recommended-settings" do
     ], sudo: true
 
     # Enable SSH for all users, not just admins
+    # (This fails if run twice, so ignore failures here.)
     system_command "/usr/sbin/dseditgroup", args: [
       "-o", "delete", "-t", "group", "com.apple.access_ssh",
-    ], sudo: true
+    ], sudo: true, print_stderr: false, must_succeed: false
 
     # Enable VNC
     system_command "/System/Library/CoreServices/RemoteManagement/ARDAgent.app/Contents/Resources/kickstart", args: [
