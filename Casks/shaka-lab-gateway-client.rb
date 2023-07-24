@@ -26,13 +26,15 @@ cask "shaka-lab-gateway-client" do
   # this way.  Instead, our tap repo includes the sources.  To satisfy
   # Homebrew, give a URL that never changes and returns no data.
   url "http://www.gstatic.com/generate_204"
-  version "20230724.164117"
+  version "20230724.164427"
   sha256 "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
 
   # We don't install anything.  We only invoke OS tools to configure AD login.
   stage_only true
 
-  postflight do
+  # Use preflight so that if the commands fail, the package is not considered
+  # installed.
+  preflight do
     # Commands to join the domain will fail if we're already in it, so check.
     domain = `dsconfigad -show | awk '/Active Directory Domain/{print $NF}'`.strip
     puts "Current domain = \"#{domain}\""
