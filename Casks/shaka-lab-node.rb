@@ -26,7 +26,7 @@ cask "shaka-lab-node" do
   # this way.  Instead, our tap repo includes the sources.  To satisfy
   # Homebrew, give a URL that never changes and returns no data.
   url "http://www.gstatic.com/generate_204"
-  version "20230724.175606"
+  version "20230724.180731"
   sha256 "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
 
   # Casks can't have optional dependencies, so note to the user that Tizen can
@@ -45,8 +45,10 @@ cask "shaka-lab-node" do
   # We install files from there.
   source_root = "#{__dir__}/../shaka-lab-source"
 
-  # The destination folder of most shaka-lab-node files.
-  destination = "/opt/shaka-lab-node"
+  # The destination folder of most shaka-lab-node files.  This must be
+  # user-writeable, since brew does not run as root.  We will create symlinks
+  # later for convenience.
+  destination = "#{HOMEBREW_PREFIX}/opt/shaka-lab-node"
 
   # The main shaka-lab-node sources.  Declared as artifacts, no logic required.
   artifact "#{source_root}/LICENSE.TXT", target: destination
@@ -60,16 +62,14 @@ cask "shaka-lab-node" do
   artifact "#{source_root}/shaka-lab-node/macos/shaka-lab-node-update.plist", target: destination
   artifact "#{source_root}/shaka-lab-node/macos/stop-services.sh", target: destination
   artifact "#{source_root}/shaka-lab-node/macos/restart-services.sh", target: destination
-
-  # The log rotation config file.
-  artifact "#{source_root}/shaka-lab-node/macos/shaka-lab-node-logrotate.conf", target: "/etc/newsyslog.d/"
+  artifact "#{source_root}/shaka-lab-node/macos/shaka-lab-node-logrotate.conf", target: destination
 
   # Use preflight so that if the commands fail, the package is not considered
   # installed.
   preflight do
-    # Config file goes in /opt/homebrew/etc.  Don't overwrite it!
-    unless File.exist? "/etc/shaka-lab-node-config.yaml"
-      FileUtils.install "#{source_root}/shaka-lab-node/shaka-lab-node-config.yaml", etc, :mode => 0644
+    # Don't overwrite the config file!
+    unless File.exist? "#{destination}/shaka-lab-node-config.yaml"
+      FileUtils.install "#{source_root}/shaka-lab-node/shaka-lab-node-config.yaml", destination, :mode => 0644
     end
 
     # This service definitions needs a hard-coded path to node.js, which is
@@ -79,7 +79,25 @@ cask "shaka-lab-node" do
     inreplace "#{destination}/shaka-lab-node-service.plist", "$HOMEBREW_PREFIX", HOMEBREW_PREFIX
 
     # Service logs go here, so make sure the folder exists:
-    FileUtils.mkdir_p "/opt/shaka-lab-node/logs"
+    FileUtils.mkdir_p "#{destination}/logs"
+
+    # Symlink the log rotation config file into its required location.
+    system_command "/bin/ln", args: [
+      "-sf", "#{destination}/shaka-lab-node-logrotate.conf",
+      "/etc/newsyslog.d/",
+    ], sudo: true
+
+    # Symlink the main config file into /etc.
+    system_command "/bin/ln", args: [
+      "-sf", "#{destination}/shaka-lab-node-config.yaml",
+      "/etc/",
+    ], sudo: true
+
+    # Symlink the installation folder into /opt.
+    system_command "/bin/ln", args: [
+      "-sf", "#{destination}",
+      "/opt/",
+    ], sudo: true
 
     # Now start/restart the services.
     puts "Restarting services..."
