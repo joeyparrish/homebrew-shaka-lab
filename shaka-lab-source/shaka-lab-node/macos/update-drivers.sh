@@ -20,11 +20,8 @@
 # Fail on error.
 set -e
 
-# Load Homebrew.
-eval "$(brew shellenv)"
-
 # Go to the install directory of shaka-lab-node.
-cd "$(brew --prefix shaka-lab-node)"
+cd /opt/shaka-lab-node
 
 # Update all modules.
 rm -f package-lock.json
