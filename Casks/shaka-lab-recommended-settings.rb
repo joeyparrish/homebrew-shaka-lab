@@ -26,7 +26,7 @@ cask "shaka-lab-recommended-settings" do
   # this way.  Instead, our tap repo includes the sources.  To satisfy
   # Homebrew, give a URL that never changes and returns no data.
   url "http://www.gstatic.com/generate_204"
-  version "20230705.223245"
+  version "20230724.162918"
   sha256 "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
 
   # We don't install anything.  We only depend on other casks and set OS
@@ -34,6 +34,14 @@ cask "shaka-lab-recommended-settings" do
   stage_only true
 
   postflight do
+    # Enable time sync
+    system_command "/usr/sbin/systemsetup", args: [
+      "-setusingnetworktime", "on",
+    ], sudo: true
+    system_command "/usr/sbin/systemsetup", args: [
+      "-setnetworktimeserver", "time.apple.com",
+    ], sudo: true
+
     # Enable SSH
     system_command "/usr/sbin/systemsetup", args: [
       "-setremotelogin", "on",
