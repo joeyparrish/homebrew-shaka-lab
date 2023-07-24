@@ -54,18 +54,18 @@ cask "shaka-lab-node" do
   # later for convenience.
   destination = "#{HOMEBREW_PREFIX}/opt/shaka-lab-node"
 
-  # NOTE: The inreplace command for Formulae is not available in Casks.
-  # Since it is very simple, we replicate it here to keep the installation
-  # code more readable.
-  def inreplace(path, original_text, new_text)
-    contents = File.read(path)
-    contents.gsub!(original_text, new_text)
-    File.open(path, "w") {|f| f.write(contents)}
-  end
-
   # Use preflight so that if the commands fail, the package is not considered
   # installed.
   preflight do
+    # NOTE: The inreplace command for Formulae is not available in Casks.
+    # Since it is very simple, we replicate it here to keep the installation
+    # code more readable.
+    def inreplace(path, original_text, new_text)
+      contents = File.read(path)
+      contents.gsub!(original_text, new_text)
+      File.open(path, "w") {|f| f.write(contents)}
+    end
+
     # Create the destination directory.
     FileUtils.mkdir_p destination
 
@@ -84,8 +84,8 @@ cask "shaka-lab-node" do
       # Use sudo to create the initial config file in /etc, owned by this user.
       system_command "/usr/bin/install", args: [
         "-m", "0644",
-        "-o", ENV["UID"],
-        "-g", ENV["GID"],
+        "-o", Process.uid,
+        "-g", Process.gid,
         "#{source_root}/shaka-lab-node/shaka-lab-node-config.yaml",
         "/etc/",
       ], sudo: true
@@ -114,7 +114,7 @@ cask "shaka-lab-node" do
 
     # Now start/restart the services.
     puts "Restarting services..."
-    system_command "#{opt_prefix}/restart-services.sh"
+    system_command "#{destination}/restart-services.sh"
     puts "Done!"
   end
 
