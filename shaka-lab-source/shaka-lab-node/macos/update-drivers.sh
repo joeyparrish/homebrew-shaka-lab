@@ -20,15 +20,12 @@
 # Fail on error.
 set -e
 
-# Load Homebrew.  Without this, we may fail to find npm below.
-eval "$(brew shellenv)"
-
 # Go to the install directory of shaka-lab-node.
 cd /opt/shaka-lab-node
 
 # Update all modules.
 rm -f package-lock.json
-npm install
+$HOMEBREW_PREFIX/bin/npm install
 
 # Update all WebDrivers.
 ./node_modules/.bin/webdriver-installer .

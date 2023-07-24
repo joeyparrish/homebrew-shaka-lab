@@ -93,11 +93,11 @@ cask "shaka-lab-node" do
       ], sudo: true
     end
 
-    # This service definitions needs a hard-coded path to node.js, which is
-    # installed under a variable Homebrew prefix.  So replace the string
-    # "$HOMEBREW_PREFIX" with the current prefix (in the HOMEBREW_PREFIX
-    # variable).
+    # Certain files need hard-coded paths to node.js, which is installed under
+    # a variable Homebrew prefix.  So replace the string "$HOMEBREW_PREFIX"
+    # with the current prefix (in the HOMEBREW_PREFIX variable).
     inreplace "#{destination}/shaka-lab-node-service.plist", "$HOMEBREW_PREFIX", HOMEBREW_PREFIX
+    inreplace "#{destination}/update-drivers.sh", "$HOMEBREW_PREFIX", HOMEBREW_PREFIX
 
     # Service logs go here, so make sure the folder exists:
     FileUtils.mkdir_p "#{destination}/logs"
