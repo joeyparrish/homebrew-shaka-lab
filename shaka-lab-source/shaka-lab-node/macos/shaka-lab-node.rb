@@ -76,7 +76,9 @@ cask "shaka-lab-node" do
     FileUtils.install "#{source_root}/shaka-lab-node/package.json", destination, :mode => 0644
     FileUtils.install "#{source_root}/shaka-lab-node/start-nodes.js", destination, :mode => 0644
     FileUtils.install Dir.glob("#{source_root}/shaka-lab-node/macos/*"), destination, :mode => 0644
-    FileUtils.install Dir.glob("#{source_root}/shaka-lab-node/macos/*.sh"), destination, :mode => 0755
+
+    # Mark the shell scripts as executable.
+    FileUtils.chmod 0755, Dir.glob("#{destination}/*.sh")
 
     # Don't overwrite the config file if it already exists!
     # This file will be left in tact during uninstall.
