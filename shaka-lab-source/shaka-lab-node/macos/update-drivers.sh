@@ -23,12 +23,14 @@ set -e
 # Set PATH to include node, npm, and other homebrew executables.
 export PATH="$HOMEBREW_PREFIX/bin:$PATH"
 
+# Force npm to write its cache here.
+export HOME="/opt/shaka-lab-node"
+
 # Go to the install directory of shaka-lab-node.
 cd /opt/shaka-lab-node
 
-# Update all modules.
-rm -f package-lock.json
-npm install
+# Update all modules to the latest version allowed by package.json.
+npm update
 
 # Update all WebDrivers.
 ./node_modules/.bin/webdriver-installer .

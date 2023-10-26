@@ -19,7 +19,7 @@
 # DON'T fail on error.  Always keep going!
 set +e
 
-# If the user not upgrading the package:
+# If the user is not upgrading the package:
 if [ "$1" != "upgrade" ]; then
   # Stop and disable services configured by this package.
   for i in named isc-dhcp-server samba-ad-dc; do

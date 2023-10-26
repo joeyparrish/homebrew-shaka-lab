@@ -1,0 +1,5 @@
+debhelper-build-stamp
+files
+shaka-lab-dummy
+shaka-lab-dummy.substvars
+*.debhelper
