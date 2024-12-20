@@ -1,6 +1,4 @@
-#!/usr/bin/make -f
-
-# Copyright 2022 Google LLC
+# Copyright 2023 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,12 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Makefile to build the debain package.
+Source: shaka-lab-cert-generator
+Maintainer: Joey Parrish <joeyparrish@google.com>
+Section: misc
+Priority: optional
+Standards-Version: 3.9.2
+Build-Depends: debhelper (>= 9)
 
-# Debug the debian build process.
-export DH_VERBOSE = 1
-
-# Generically, any build target should be handled off to "dh" to do something
-# standard, unless a step is overriden above.
-%:
-	dh $@
+Package: shaka-lab-cert-generator
+Architecture: all
+Depends: openssh-client, python3-certbot, python3-certbot-dns-google
+Description: Shaka Lab Cert Generator
+  Creates and renews certificates for HTTPS-based testing in the Shaka Lab

@@ -30,6 +30,7 @@ let updateDrivers = `${shakaLabNodePath}/update-drivers.sh`;
 let classPathSeparator = ':';
 let exe = '';
 let cmd = '';
+let javaCommand = 'java';
 
 if (process.platform == 'win32') {
   configPath = 'c:/ProgramData/shaka-lab-node/shaka-lab-node-config.yaml';
@@ -39,6 +40,7 @@ if (process.platform == 'win32') {
   classPathSeparator = ';';
   exe = '.exe';
   cmd = '.cmd';
+  javaCommand = 'C:/ProgramData/chocolatey/bin/java.exe';
 } else if (process.platform == 'darwin') {
   configPath = '/etc/shaka-lab-node-config.yaml';
   shakaLabNodePath = '/opt/shaka-lab-node';
@@ -118,17 +120,31 @@ function requiredParam(nodeConfig, templateName, paramName) {
 }
 
 /**
+ * @param {string} paramSpec
+ * @return {[string, string]}
+ */
+function parseOptionalParamSpec(paramSpec) {
+  // remove leading '?', split by optional '='
+  const paramSpecParts = paramSpec.substr(1).split('=');
+
+  const paramName = paramSpecParts.shift();
+  const defaultValue = paramSpecParts.length ? paramSpecParts.join('=') : '';
+  return [paramName, defaultValue];
+}
+
+/**
  * Access an optional param from a node config, or return a blank default.
  *
  * @param {Object} nodeConfig
  * @param {string} paramName
+ * @param {string} defaultValue
  * @return {string}
  */
-function optionalParam(nodeConfig, paramName) {
+function optionalParam(nodeConfig, paramName, defaultValue) {
   if (nodeConfig.params && paramName in nodeConfig.params) {
     return nodeConfig.params[paramName];
   }
-  return '';
+  return defaultValue;
 }
 
 /**
@@ -161,7 +177,11 @@ function stopAllProcesses(processes) {
   for (const child of processes) {
     if (child.exitCode == null) {
       // Still running.  Stop it.
-      child.kill();
+      try {
+        child.kill();
+      } catch (error) {
+        // Ignore errors if the process is already dead.
+      }
     }
   }
 }
@@ -176,7 +196,23 @@ function main() {
   // Update WebDrivers on startup.
   // This has a side-effect of also installing other requirements, such as
   // js-yaml, which we don't load until we need it below.
-  child_process.spawnSync(updateDrivers, /* args= */ [], spawnOptions);
+  const updateSpawnOptions = Object.assign({}, spawnOptions);
+  if (process.platform == 'win32') {
+    // To run the .cmd script in the latest nodejs, you must pass shell=true.
+    updateSpawnOptions.shell = true;
+  }
+  const updateProcess = child_process.spawnSync(
+      updateDrivers, /* args= */ [], updateSpawnOptions);
+  if (updateProcess.status) {
+    throw new Error(
+        `Driver update failed with exit code ${updateProcess.status}`);
+  }
+  if (updateProcess.error) {
+    // Hopefully this error object has enough context without us needing to
+    // write a custom message or wrap the Error object in any way.  We haven't
+    // triggered this in the wild yet.
+    throw updateProcess.error;
+  }
 
   const yaml = require('js-yaml');
 
@@ -201,8 +237,11 @@ function main() {
         const optional = paramName.startsWith('?');
 
         if (optional) {
-          paramName = paramName.substr(1);  // remove leading '?'
-          params[paramName] = optionalParam(nodeConfig, paramName);
+          let defaultValue;
+          [paramName, defaultValue] = parseOptionalParamSpec(paramName);
+
+          params[paramName] = optionalParam(
+              nodeConfig, paramName, defaultValue);
         } else {
           params[paramName] = requiredParam(
               nodeConfig, templateName, paramName);
@@ -220,7 +259,7 @@ function main() {
         template, templatesPath, 'capabilities', `${templateName}.`);
 
     // We always start with the "java" command.
-    const args = ['java'];
+    const args = [javaCommand];
 
     // There may be java definitions to set.
     for (const key in defs) {
@@ -281,13 +320,16 @@ function main() {
   for (const args of nodeCommands) {
     const command = args.shift();
 
+    console.log('Spawning child process:', args);
     const child = child_process.spawn(command, args, spawnOptions);
 
-    child.once('error', () => {
+    child.once('error', (event) => {
+      console.log('Child process errored.', event);
       stopAllProcesses(processes);
       process.exit(1);
     });
-    child.once('exit', () => {
+    child.once('exit', (event) => {
+      console.log('Child process exited.', event);
       stopAllProcesses(processes);
       process.exit(1);
     });
@@ -300,6 +342,7 @@ function main() {
   // Without this, there is no way to shut down a service on macOS explicitly
   // without the keepAlive setting starting it again.
   process.once('SIGTERM', () => {
+    console.log('Received SIGTERM.  Quitting.');
     process.exit(0);
   });
 
@@ -307,6 +350,7 @@ function main() {
   // This seems to help with service shut down on Windows, which would
   // otherwise leave the child processes orphaned and running.
   process.once('exit', () => {
+    console.log('Exit event.');
     stopAllProcesses(processes);
   });
 

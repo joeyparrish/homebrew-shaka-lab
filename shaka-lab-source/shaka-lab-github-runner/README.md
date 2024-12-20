@@ -55,12 +55,15 @@ echo deb https://shaka-project.github.io/shaka-lab/ stable main | \
 sudo apt update
 
 # Configure your GitHub details before installation to avoid prompting.
+# Note that support_nested_containers is incompatible with number_of_runners
+# greater than 1.
 cat << EOF | sudo debconf-set-selections
 shaka-lab-github-runner shaka-lab-github-runner/scope select SCOPE
 shaka-lab-github-runner shaka-lab-github-runner/scope_name string SCOPE_NAME
 shaka-lab-github-runner shaka-lab-github-runner/access_token password ACCESS_TOKEN
 shaka-lab-github-runner shaka-lab-github-runner/labels string LABELS
 shaka-lab-github-runner shaka-lab-github-runner/number_of_runners string NUMBER
+shaka-lab-github-runner shaka-lab-github-runner/support_nested_containers boolean TRUE_OR_FALSE
 EOF
 
 # Install the package, which will not have to prompt for anything thanks to
@@ -84,10 +87,13 @@ workflows.
 ## Certs
 
 If your workflow needs HTTPS certificates (as the Shaka Player testing
-workflows do), then you should also install the
-[`shaka-lab-certs`](../shaka-lab-certs/README.md#readme) package.  If
-`shaka-lab-certs` is installed, the `shaka-lab-github-runner` package will
-automatically make those certs accessible to runners under `/etc/letsencrypt/`.
+workflows do), then you should also look at the
+[`shaka-lab-cert-generator`](../shaka-lab-cert-generator/README.md#readme)
+and possibly
+[`shaka-lab-cert-receiver`](../shaka-lab-cert-receiver/README.md#readme)
+packages.  If one of these is installed, the `shaka-lab-github-runner` package
+will automatically make those certs accessible to runners under
+`/etc/letsencrypt/`.
 
 ## Customization
 
@@ -115,6 +121,7 @@ them in text files inside `/etc/shaka-lab-github-runner.args.d/`.
 
 To add Docker command line arguments that apply to specific runner instances,
 add them in text files inside `/etc/shaka-lab-github-runner@$INSTANCE.args.d/`.
+
 
 ## Updates
 
